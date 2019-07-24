@@ -24,6 +24,12 @@ def get_tracks_from_web_api(sp):
     return get_from_sp(sp, get_next_spotify_tracks_items,
                        spotify_get_tracks_process_results)
 
+def get_playlist_tracks(sp):
+    user_id = sp.current_user()['id']
+    tracks = [to_mopidy_track(item['track'])
+              for playlist in sp.current_user_playlists()['items']
+              for item in sp.user_playlist_tracks(user_id, playlist['id'])['items']]
+    return tracks
 
 def spotify_get_tracks_process_results(results):
     logger.debug('Processing spotify get tracks result')
@@ -237,7 +243,7 @@ class SpotifyWebLibraryProvider(backend.LibraryProvider):
         if sp is not None:
             logger.debug('Loading spotify-web library from '
                          'web-api using token: %s', self._access_token)
-            tracks = get_tracks_from_web_api(sp)
+            tracks = get_tracks_from_web_api(sp) + get_playlist_tracks(sp)
         else:
             logger.warn('Could not initialize spotipy web api instance')
             tracks = []
